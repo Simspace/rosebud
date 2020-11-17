@@ -42,6 +42,8 @@ module Rosebud
     -- * Transformation
     -- ** Trees
   , enumerateTree
+  , zipTree
+  , zipWithTree
     -- ** Forests
   , enumerateForest
   , enumerateNEForest
@@ -278,6 +280,22 @@ isSubtreeInBy f subtree = or . map (isSubtreeOfBy f subtree) . Foldable.toList
 -- @since 0.1.0.0
 enumerateTree :: (Enum a, Num a) => Tree b -> Tree (a, b)
 enumerateTree = Zip.mzip indicesTree
+
+-- | Given two input 'Tree' values, provide a 'Tree' of corresponding label
+-- pairs. This function exists for the convenience of not needing to import
+-- "Control.Monad.Zip".
+--
+-- @since 0.1.0.0
+zipTree :: Tree a -> Tree b -> Tree (a, b)
+zipTree = Zip.mzip
+
+-- | Generalizes 'zipTree' by zipping label values via the provided function.
+-- This function exists for the convenience of not needing to import
+-- "Control.Monad.Zip".
+--
+-- @since 0.1.0.0
+zipWithTree :: (a -> b -> c) -> Tree a -> Tree b -> Tree c
+zipWithTree f = Zip.mzipWith f
 
 -- | Number each level of labels in the 'Forest', starting from 0 at each level.
 --

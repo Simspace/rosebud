@@ -89,6 +89,14 @@ spec = parallel do
 --    it "works" do
 --      pending
 --
+--  describe "zipTree" do
+--    it "works" do
+--      pending
+--
+--  describe "zipWithTree" do
+--    it "works" do
+--      pending
+--
 --  describe "enumerateForest" do
 --    it "works" do
 --      pending
