@@ -1,0 +1,50 @@
+name: rosebud
+version: '0.1.0.0'
+github: "Simspace/rosebud"
+license: BSD3
+license-file: LICENSE.md
+copyright: 2020 (c) SimSpace
+author: "Jason Shipman"
+maintainer: "jasonpshipman@gmail.com"
+synopsis: Common rose tree/forest functions
+description: |
+  Common functions/patterns for working with rose tree/forest values from the
+  `containers` package.
+category: Data
+
+extra-source-files:
+- CHANGELOG.md
+- LICENSE.md
+- package.yaml
+- README.md
+
+ghc-options:
+  - -Wall
+  - -fwarn-tabs
+  - -Wincomplete-uni-patterns
+  - -Wredundant-constraints
+
+library:
+  dependencies:
+  - base >=4.13 && <5
+  - containers >=0.6.2.1 && <0.7
+  - transformers >=0.5.6.2 && <0.6
+  source-dirs: library
+
+tests:
+  rosebud-test-suite:
+    source-dirs: test-suite
+    main: Driver.hs
+    build-tools:
+    - hspec-discover
+    dependencies:
+    - QuickCheck
+    - base
+    - containers
+    - hspec
+    - quickcheck-instances
+    - rosebud
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - '"-with-rtsopts=-N -T"'
