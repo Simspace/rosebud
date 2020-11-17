@@ -102,7 +102,7 @@ import qualified Data.Tree as Tree
 -- @since 0.1.0.0
 type NEForest a = NonEmpty (Tree a)
 
--- | The error type for 'eitherTreeFromLabels' and 'eitherNEForestFromLabels'.
+-- | The error type for 'eitherNEForestFromLabels'.
 --
 -- @since 0.1.0.0
 data NEForestFromLabelsError a
@@ -118,6 +118,9 @@ data NEForestFromLabelsError a
   deriving stock (Eq, Show, Generic)
   deriving anyclass (Exception)
 
+-- | The error type for 'eitherTreeFromLabels'.
+--
+-- @since 0.1.0.0
 data TreeFromLabelsError a
   = -- | Produced more than one 'Tree' when only one 'Tree' was expected.
     -- Provides back all assembled 'Tree' values in an 'NEForest'.
