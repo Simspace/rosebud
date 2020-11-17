@@ -74,7 +74,7 @@ module Rosebud
   , neForest
   , unsafeNEForest
 
-    -- ** Errors
+    -- * Errors
   , NEForestFromLabelsError(NoRootsFoundError, OrphansFoundError)
   , TreeFromLabelsError(TooManyTreesError, ForestFromLabelsError)
   ) where

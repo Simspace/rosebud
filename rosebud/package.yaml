@@ -8,8 +8,8 @@ author: "Jason Shipman"
 maintainer: "jasonpshipman@gmail.com"
 synopsis: Common rose tree/forest functions
 description: |
-  Common functions/patterns for working with rose tree/forest values from the
-  `containers` package.
+  Common functions and patterns for working with rose tree/forest values from
+  the `containers` package.
 category: Data
 
 extra-source-files:
