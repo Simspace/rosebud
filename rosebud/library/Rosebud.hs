@@ -74,6 +74,7 @@ module Rosebud
 
     -- ** Errors
   , NEForestFromLabelsError(NoRootsFoundError, OrphansFoundError)
+  , TreeFromLabelsError(TooManyTreesError, ForestFromLabelsError)
   ) where
 
 import Control.Exception (Exception)
