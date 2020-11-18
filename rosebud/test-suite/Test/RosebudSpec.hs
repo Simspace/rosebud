@@ -40,7 +40,7 @@ spec = parallel do
   describe "sortTree" do
     it "tree size stays the same" do
       QC.property \(x :: Tree Int) ->
-        Foldable.length (Rosebud.sortTree x) == Foldable.length x
+        Foldable.length (Rosebud.sortTree x) `shouldBe` Foldable.length x
     it "children are sorted" do
       QC.property \(x :: Tree Int) ->
         childrenSortedBy (<=) $ Rosebud.sortTree x
@@ -48,7 +48,7 @@ spec = parallel do
   describe "sortTreeOn" do
     it "tree size stays the same" do
       QC.property \(x :: Tree Int) ->
-        Foldable.length (Rosebud.sortTreeOn negate x) == Foldable.length x
+        Foldable.length (Rosebud.sortTreeOn negate x) `shouldBe` Foldable.length x
     it "children are sorted" do
       QC.property \(x :: Tree Int) ->
         childrenSortedBy (>=) $ Rosebud.sortTreeOn negate x
@@ -57,7 +57,7 @@ spec = parallel do
     it "forest size stays the same" do
       QC.property \(x :: Forest Int) ->
         sum (fmap (Foldable.length) (Rosebud.sortForest x))
-          == sum (fmap Foldable.length x)
+          `shouldBe` sum (fmap Foldable.length x)
     it "forest is sorted by the root nodes" do
       QC.property \(x :: Forest Int) ->
          isSortedBy (<=) $ fmap Tree.rootLabel $ Rosebud.sortForest x
@@ -69,7 +69,7 @@ spec = parallel do
     it "forest size stays the same" do
       QC.property \(x :: Forest Int) ->
         sum (fmap (Foldable.length) (Rosebud.sortForestOn negate x))
-          == sum (fmap Foldable.length x)
+          `shouldBe` sum (fmap Foldable.length x)
     it "forest is sorted by the root nodes" do
       QC.property \(x :: Forest Int) ->
          isSortedBy (>=) $ fmap Tree.rootLabel $ Rosebud.sortForestOn negate x
@@ -81,7 +81,7 @@ spec = parallel do
     it "forest size stays the same" do
       QC.property \(x :: NEForest Int) ->
         sum (fmap (Foldable.length) (Rosebud.sortNEForest x))
-          == sum (fmap Foldable.length x)
+          `shouldBe` sum (fmap Foldable.length x)
     it "forest is sorted by the root nodes" do
       QC.property \(x :: NEForest Int) ->
          isSortedBy (<=) $ NonEmpty.toList $ fmap Tree.rootLabel $ Rosebud.sortNEForest x
@@ -93,7 +93,7 @@ spec = parallel do
     it "forest size stays the same" do
       QC.property \(x :: NEForest Int) ->
         sum (fmap (Foldable.length) (Rosebud.sortNEForestOn negate x))
-          == sum (fmap Foldable.length x)
+          `shouldBe` sum (fmap Foldable.length x)
     it "forest is sorted by the root nodes" do
       QC.property \(x :: NEForest Int) ->
          isSortedBy (>=) $ NonEmpty.toList $ fmap Tree.rootLabel $ Rosebud.sortNEForestOn negate x
@@ -224,12 +224,12 @@ spec = parallel do
   describe "zipTree" do
     it "equivalent to 'Control.Monad.Zip.mzip'" do
       QC.property \(x :: Tree Int) (y :: Tree Int) ->
-        Rosebud.zipTree x y == Zip.mzip x y
+        Rosebud.zipTree x y `shouldBe` Zip.mzip x y
 
   describe "zipWithTree" do
     it "equivalent to 'Control.Monad.Zip.mzipWith'" do
       QC.property \(x :: Tree Int) (y :: Tree Int) ->
-        Rosebud.zipWithTree (+) x y == Zip.mzipWith (+) x y
+        Rosebud.zipWithTree (+) x y `shouldBe` Zip.mzipWith (+) x y
 
   describe "pathsTree" do
     it "singleton" do
@@ -285,37 +285,37 @@ spec = parallel do
     it "equivalent to 'enumerateForest' for non-empty" do
       QC.property \(x :: NEForest Int) ->
         NonEmpty.toList (Rosebud.enumerateNEForest @Int x)
-          == Rosebud.enumerateForest (NonEmpty.toList x)
+          `shouldBe` Rosebud.enumerateForest (NonEmpty.toList x)
 
   describe "mapForest" do
     it "equivalent to 'map (fmap f)" do
       QC.property \(x :: Forest Int) ->
-        Rosebud.mapForest show x == map (fmap show) x
+        Rosebud.mapForest show x `shouldBe` map (fmap show) x
     it "identity" do
       QC.property \(x :: Forest Int) ->
-        Rosebud.mapForest id x == x
+        Rosebud.mapForest id x `shouldBe` x
     it "composition" do
       QC.property \(x :: Forest Int) ->
         let f = (+ 2)
             g = show
          in Rosebud.mapForest (g . f) x
-              == (Rosebud.mapForest g . Rosebud.mapForest f) x
+              `shouldBe` (Rosebud.mapForest g . Rosebud.mapForest f) x
 
   describe "mapNEForest" do
     it "equivalent to 'mapForest' for non-empty" do
       QC.property \(x :: NEForest Int) ->
         NonEmpty.toList (Rosebud.mapNEForest show x)
-          == Rosebud.mapForest show (NonEmpty.toList x)
+          `shouldBe` Rosebud.mapForest show (NonEmpty.toList x)
 
   describe "zipForest" do
     it "equivalent to 'zipWithForest (,)'" do
       QC.property \(x :: Forest Int) (y :: Forest Int) ->
-        Rosebud.zipForest x y == Rosebud.zipWithForest (,) x y
+        Rosebud.zipForest x y `shouldBe` Rosebud.zipWithForest (,) x y
 
   describe "zipNEForest" do
     it "equivalent to 'zipWithNEForest (,)'" do
       QC.property \(x :: NEForest Int) (y :: NEForest Int) ->
-        Rosebud.zipNEForest x y == Rosebud.zipWithNEForest (,) x y
+        Rosebud.zipNEForest x y `shouldBe` Rosebud.zipWithNEForest (,) x y
 
   describe "zipWithForest" do
     it "singletons" do
@@ -336,7 +336,7 @@ spec = parallel do
       let asList = NonEmpty.toList
       QC.property \(x :: NEForest Int) (y :: NEForest Int) ->
         asList (Rosebud.zipWithNEForest (+) x y)
-          == Rosebud.zipWithForest (+) (asList x) (asList y)
+          `shouldBe` Rosebud.zipWithForest (+) (asList x) (asList y)
 
   describe "pathsForest" do
     it "empty" do
@@ -460,21 +460,21 @@ spec = parallel do
     it "number of labels stays the same" do
       QC.property \(x :: Forest Int) ->
         Foldable.length (Rosebud.flattenForest x)
-          == sum (fmap Foldable.length x)
+          `shouldBe` sum (fmap Foldable.length x)
     it "equivalent to concatenating each flattened tree" do
       QC.property \(x :: Forest Int) ->
-        Rosebud.flattenForest x == concatMap Tree.flatten x
+        Rosebud.flattenForest x `shouldBe` concatMap Tree.flatten x
 
   describe "flattenNEForest" do
     it "equivalent to 'flattenForest' for non-empty" do
       QC.property \(x :: NEForest Int) ->
         NonEmpty.toList (Rosebud.flattenNEForest x)
-          == Rosebud.flattenForest (NonEmpty.toList x)
+          `shouldBe` Rosebud.flattenForest (NonEmpty.toList x)
 
   describe "singletonTree" do
     it "works" do
       QC.property \(x :: Int) ->
-        Rosebud.singletonTree x == Node x []
+        Rosebud.singletonTree x `shouldBe` Node x []
 
   describe "subtrees" do
     it "singleton" do
@@ -494,7 +494,7 @@ spec = parallel do
   describe "neSubtrees" do
     it "is equivalent to 'subtrees' for non-empty" do
       QC.property \(x :: Tree Int) ->
-        NonEmpty.toList (Rosebud.neSubtrees x) == Rosebud.subtrees x
+        NonEmpty.toList (Rosebud.neSubtrees x) `shouldBe` Rosebud.subtrees x
 
   describe "eitherTreeFromLabels" do
     it "returns 'TooManyTreesError' when more than one root is present" do
@@ -643,12 +643,12 @@ spec = parallel do
   describe "singletonForest" do
     it "works" do
       QC.property \(x :: Int) ->
-        Rosebud.singletonForest x == [Node x []]
+        Rosebud.singletonForest x `shouldBe` [Node x []]
 
   describe "singletonForest" do
     it "works" do
       QC.property \(x :: Int) ->
-        Rosebud.singletonNEForest x == Node x [] :| []
+        Rosebud.singletonNEForest x `shouldBe` Node x [] :| []
 
   describe "eitherNEForestFromLabels" do
     it "returns 'NoRootsFoundError' when no roots can be found" do
@@ -768,7 +768,7 @@ spec = parallel do
       Rosebud.neForest @(Forest Int) [] `shouldBe` Nothing
     it "when given non-empty forest, produces Just" do
       QC.property \(x :: Forest Int) ->
-        not (null x) ==> Rosebud.neForest x == Just (NonEmpty.fromList x)
+        not (null x) ==> Rosebud.neForest x `shouldBe` Just (NonEmpty.fromList x)
 
   describe "unsafeNEForest" do
     it "when given non-empty forest, produces Just" do
@@ -776,7 +776,7 @@ spec = parallel do
         `shouldThrow` unsafeNEForestErrorSelector
     it "when given non-empty forest, produces Just" do
       QC.property \(x :: Forest Int) ->
-        not (null x) ==> Rosebud.unsafeNEForest x == NonEmpty.fromList x
+        not (null x) ==> Rosebud.unsafeNEForest x `shouldBe` NonEmpty.fromList x
 
 -------------------------------------------------------------------------------
 
