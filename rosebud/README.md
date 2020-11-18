@@ -3,7 +3,8 @@
 [![Version badge][]][version]
 
 `rosebud` captures functions and patterns often reached for when working with
-`Data.Tree` from the `containers` package.
+`Data.Tree` from the `containers` package. The dependences are intentionally
+kept very light.
 
 See the Haddocks for more info on the library.
 
