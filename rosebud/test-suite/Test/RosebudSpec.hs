@@ -290,6 +290,15 @@ spec = parallel do
     it "equivalent to 'map (fmap f)" do
       QC.property @(Forest Int -> Bool) \x ->
         Rosebud.mapForest show x == map (fmap show) x
+    it "identity" do
+      QC.property @(Forest Int -> Bool) \x ->
+        Rosebud.mapForest id x == x
+    it "composition" do
+      QC.property @(Forest Int -> Bool) \x ->
+        let f = (+ 2)
+            g = show
+         in Rosebud.mapForest (g . f) x
+              == (Rosebud.mapForest g . Rosebud.mapForest f) x
 
   describe "mapNEForest" do
     it "equivalent to 'mapForest' for non-empty" do
