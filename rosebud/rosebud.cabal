@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 012a8cd915df8ef37bd955b826889c494d81c9d1401b20a4d524e12447dfce1f
+-- hash: d6d4f29c294d3ff21e89ddae6d61ca04d637f8db33e6275f2f68a947ce585d1a
 
 name:           rosebud
 version:        0.1.0.0
@@ -48,6 +48,7 @@ test-suite rosebud-test-suite
   type: exitcode-stdio-1.0
   main-is: Driver.hs
   other-modules:
+      Test.Rosebud.Arbitrary
       Test.RosebudSpec
       Paths_rosebud
   hs-source-dirs:
@@ -60,6 +61,5 @@ test-suite rosebud-test-suite
     , base
     , containers
     , hspec
-    , quickcheck-instances
     , rosebud
   default-language: Haskell2010

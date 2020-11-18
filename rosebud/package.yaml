@@ -42,7 +42,6 @@ tests:
     - base
     - containers
     - hspec
-    - quickcheck-instances
     - rosebud
     ghc-options:
     - -threaded
