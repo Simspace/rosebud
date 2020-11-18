@@ -4,7 +4,7 @@ github: "Simspace/rosebud"
 license: BSD3
 license-file: LICENSE.md
 copyright: 2020 (c) SimSpace
-author: "Jason Shipman"
+author: "Jason Shipman and Cary Robbins"
 maintainer: "jasonpshipman@gmail.com"
 synopsis: Common rose tree/forest functions
 description: |

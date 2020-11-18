@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 80ca56c3a0f7d839f99460728a95b263a0287387c93411df4b8b021210ec3e0c
+-- hash: 8976b656eacf997c92d79fa09e4e330e13641417e62e0be09731988d8729907d
 
 name:           rosebud
 version:        0.1.0.0
@@ -14,7 +14,7 @@ description:    Common functions and patterns for working with rose tree/forest 
 category:       Data
 homepage:       https://github.com/Simspace/rosebud#readme
 bug-reports:    https://github.com/Simspace/rosebud/issues
-author:         Jason Shipman
+author:         Jason Shipman and Cary Robbins
 maintainer:     jasonpshipman@gmail.com
 copyright:      2020 (c) SimSpace
 license:        BSD3
