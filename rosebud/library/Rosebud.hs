@@ -44,6 +44,7 @@ module Rosebud
   , enumerateTree
   , zipTree
   , zipWithTree
+  , pathsTree
     -- ** Forests
   , enumerateForest
   , enumerateNEForest
@@ -53,6 +54,8 @@ module Rosebud
   , zipNEForest
   , zipWithForest
   , zipWithNEForest
+  , pathsForest
+  , pathsNEForest
   , flattenForest
   , flattenNEForest
 
@@ -83,6 +86,7 @@ import Control.Exception (Exception)
 import Control.Monad.Trans.State (State)
 import Data.List.NonEmpty (NonEmpty((:|)), NonEmpty)
 import Data.Monoid (Alt(Alt))
+import Data.Sequence ((<|), Seq)
 import Data.Tree (Tree(Node, rootLabel, subForest), Forest)
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
@@ -305,6 +309,20 @@ zipTree = Zip.mzip
 zipWithTree :: (a -> b -> c) -> Tree a -> Tree b -> Tree c
 zipWithTree f = Zip.mzipWith f
 
+-- | Produce all the paths for the given 'Tree'.
+--
+-- >>> λ> pathsTree $ Node 1 [Node 2 [Node 4 [], Node 5 []], Node 3 []]
+-- >>> fromList [1] :| [fromList [1,2],fromList [1,2,4],fromList [1,2,5],fromList [1,3]]
+--
+-- @since 0.1.0.0
+pathsTree :: forall a. Tree a -> NonEmpty (Seq a)
+pathsTree = NonEmpty.fromList . go
+  where
+  go :: Tree a -> [Seq a]
+  go = \case
+    Node { rootLabel, subForest } ->
+      pure rootLabel : concatMap (map (rootLabel <|) . go) subForest
+
 -- | Number each level of labels in the 'Forest', starting from 0 at each level.
 --
 -- @since 0.1.0.0
@@ -356,6 +374,21 @@ zipWithForest f = zipWith (Zip.mzipWith f)
 -- @since 0.1.0.0
 zipWithNEForest :: (a -> b -> c) -> NEForest a -> NEForest b -> NEForest c
 zipWithNEForest f = NonEmpty.zipWith (Zip.mzipWith f)
+
+-- | Produce all the paths for the given 'Forest', if any 'Tree' values exist
+-- in the 'Forest'.
+--
+-- @since 0.1.0.0
+pathsForest :: Forest a -> Maybe (NonEmpty (Seq a))
+pathsForest = \case
+  [] -> Nothing
+  forest -> Just $ pathsNEForest $ NonEmpty.fromList forest
+
+-- | Produce all the paths for the given 'NEForest'.
+--
+-- @since 0.1.0.0
+pathsNEForest :: NEForest a -> NonEmpty (Seq a)
+pathsNEForest = Semigroup.sconcat . NonEmpty.map pathsTree
 
 -- | Flatten each 'Tree' in the input 'Forest', then concatenate the results.
 --

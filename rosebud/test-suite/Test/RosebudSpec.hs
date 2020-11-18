@@ -18,6 +18,7 @@ import qualified Control.Monad.Zip as Zip
 import qualified Data.Foldable as Foldable
 import qualified Data.List as List
 import qualified Data.List.NonEmpty as NonEmpty
+import qualified Data.Sequence as Sequence
 import qualified Data.Tree as Tree
 import qualified Rosebud
 import qualified Test.QuickCheck as QC
@@ -229,6 +230,30 @@ spec = parallel do
       QC.property @(Tree Int -> Tree Int -> Bool) \x y ->
         Rosebud.zipWithTree (+) x y == Zip.mzipWith (+) x y
 
+  describe "pathsTree" do
+    it "singleton" do
+      let tree = Node 'a' []
+      Rosebud.pathsTree tree
+        `shouldBe` NonEmpty.fromList [Sequence.fromList ['a']]
+    it "some children" do
+      let tree =
+            Node 'a'
+              [ Node 'b'
+                  [ Node 'c' []
+                  , Node 'd' []
+                  ]
+              , Node 'e' []
+              ]
+      Rosebud.pathsTree tree
+        `shouldBe`
+          NonEmpty.fromList
+            [ Sequence.fromList "a"
+            , Sequence.fromList "ab"
+            , Sequence.fromList "abc"
+            , Sequence.fromList "abd"
+            , Sequence.fromList "ae"
+            ]
+
   describe "enumerateForest" do
     it "singleton" do
       let forest = [Node 'a' []]
@@ -286,6 +311,73 @@ spec = parallel do
       QC.property @(NEForest Int -> NEForest Int -> Bool) \x y ->
         asList (Rosebud.zipWithNEForest (+) x y)
           == Rosebud.zipWithForest (+) (asList x) (asList y)
+
+  describe "pathsForest" do
+    it "singleton" do
+      let forest = [Node 'a' []]
+      Rosebud.pathsForest forest
+        `shouldBe` Just (NonEmpty.fromList [Sequence.fromList ['a']])
+    it "some children" do
+      let forest =
+            [ Node 'a'
+                [ Node 'b'
+                    [ Node 'c' []
+                    , Node 'd' []
+                    ]
+                , Node 'e' []
+                ]
+            , Node 'f' []
+            , Node 'g'
+                [ Node 'h' []
+                ]
+            ]
+      Rosebud.pathsForest forest
+        `shouldBe`
+          Just
+            ( NonEmpty.fromList
+                [ Sequence.fromList "a"
+                , Sequence.fromList "ab"
+                , Sequence.fromList "abc"
+                , Sequence.fromList "abd"
+                , Sequence.fromList "ae"
+                , Sequence.fromList "f"
+                , Sequence.fromList "g"
+                , Sequence.fromList "gh"
+                ]
+            )
+
+  describe "pathsNEForest" do
+    it "singleton" do
+      let forest = NonEmpty.fromList [Node 'a' []]
+      Rosebud.pathsNEForest forest
+        `shouldBe` NonEmpty.fromList [Sequence.fromList ['a']]
+    it "some children" do
+      let forest =
+            NonEmpty.fromList
+              [ Node 'a'
+                  [ Node 'b'
+                      [ Node 'c' []
+                      , Node 'd' []
+                      ]
+                  , Node 'e' []
+                  ]
+              , Node 'f' []
+              , Node 'g'
+                  [ Node 'h' []
+                  ]
+              ]
+      Rosebud.pathsNEForest forest
+        `shouldBe`
+          NonEmpty.fromList
+            [ Sequence.fromList "a"
+            , Sequence.fromList "ab"
+            , Sequence.fromList "abc"
+            , Sequence.fromList "abd"
+            , Sequence.fromList "ae"
+            , Sequence.fromList "f"
+            , Sequence.fromList "g"
+            , Sequence.fromList "gh"
+            ]
 
   describe "flattenForest" do
     it "number of labels stays the same" do
