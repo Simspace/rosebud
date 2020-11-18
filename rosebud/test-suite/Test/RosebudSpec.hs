@@ -313,6 +313,9 @@ spec = parallel do
           == Rosebud.zipWithForest (+) (asList x) (asList y)
 
   describe "pathsForest" do
+    it "empty" do
+      let forest = []
+      Rosebud.pathsForest @Char forest `shouldBe` Nothing
     it "singleton" do
       let forest = [Node 'a' []]
       Rosebud.pathsForest forest
