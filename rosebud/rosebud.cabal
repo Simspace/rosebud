@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d6d4f29c294d3ff21e89ddae6d61ca04d637f8db33e6275f2f68a947ce585d1a
+-- hash: 80ca56c3a0f7d839f99460728a95b263a0287387c93411df4b8b021210ec3e0c
 
 name:           rosebud
 version:        0.1.0.0
@@ -39,8 +39,8 @@ library
       library
   ghc-options: -Wall -fwarn-tabs -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
-      base >=4.13 && <5
-    , containers >=0.6.2.1 && <0.7
+      base >=4.12 && <5
+    , containers >=0.6.0.1 && <0.7
     , transformers >=0.5.6.2 && <0.6
   default-language: Haskell2010
 

@@ -26,8 +26,8 @@ ghc-options:
 
 library:
   dependencies:
-  - base >=4.13 && <5
-  - containers >=0.6.2.1 && <0.7
+  - base >=4.12 && <5
+  - containers >=0.6.0.1 && <0.7
   - transformers >=0.5.6.2 && <0.6
   source-dirs: library
 
