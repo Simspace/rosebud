@@ -45,6 +45,7 @@ module Rosebud
   , zipTree
   , zipWithTree
   , pathsTree
+  , leavesTree
     -- ** Forests
   , enumerateForest
   , enumerateNEForest
@@ -56,6 +57,8 @@ module Rosebud
   , zipWithNEForest
   , pathsForest
   , pathsNEForest
+  , leavesForest
+  , leavesNEForest
   , flattenForest
   , flattenNEForest
 
@@ -323,6 +326,19 @@ pathsTree = NonEmpty.fromList . go
     Node { rootLabel, subForest } ->
       pure rootLabel : concatMap (map (rootLabel <|) . go) subForest
 
+-- | Produce all the leaves for the given 'Tree'.
+--
+-- @since 0.1.0.0
+leavesTree :: Tree a -> NonEmpty a
+leavesTree = NonEmpty.fromList . go
+  where
+  go = \case
+    Node { rootLabel, subForest }
+      | null subForest -> rootLabel : rest
+      | otherwise -> rest
+      where
+      rest = concatMap go subForest
+
 -- | Number each level of labels in the 'Forest', starting from 0 at each level.
 --
 -- @since 0.1.0.0
@@ -389,6 +405,21 @@ pathsForest = \case
 -- @since 0.1.0.0
 pathsNEForest :: NEForest a -> NonEmpty (Seq a)
 pathsNEForest = Semigroup.sconcat . NonEmpty.map pathsTree
+
+-- | Produce all the leaves for the given 'Forest', if any 'Tree' values exist
+-- in the 'Forest.
+--
+-- @since 0.1.0.0
+leavesForest :: Forest a -> Maybe (NonEmpty a)
+leavesForest = \case
+  [] -> Nothing
+  forest -> Just $ leavesNEForest $ NonEmpty.fromList forest
+
+-- | Produce all the leaves for the given 'NEForest'.
+--
+-- @since 0.1.0.0
+leavesNEForest :: NEForest a -> NonEmpty a
+leavesNEForest = Semigroup.sconcat . NonEmpty.map leavesTree
 
 -- | Flatten each 'Tree' in the input 'Forest', then concatenate the results.
 --

@@ -254,6 +254,22 @@ spec = parallel do
             , Sequence.fromList "ae"
             ]
 
+  describe "leavesTree" do
+    it "singleton" do
+      let tree = Node 'a' []
+      Rosebud.leavesTree tree
+        `shouldBe` NonEmpty.fromList ['a']
+    it "some children" do
+      let tree =
+            Node 'a'
+              [ Node 'b'
+                  [ Node 'c' []
+                  , Node 'd' []
+                  ]
+              , Node 'e' []
+              ]
+      Rosebud.leavesTree tree `shouldBe` NonEmpty.fromList ['c', 'd', 'e']
+
   describe "enumerateForest" do
     it "singleton" do
       let forest = [Node 'a' []]
@@ -381,6 +397,54 @@ spec = parallel do
             , Sequence.fromList "g"
             , Sequence.fromList "gh"
             ]
+
+  describe "leavesForest" do
+    it "empty" do
+      let forest = []
+      Rosebud.leavesForest @Char forest `shouldBe` Nothing
+    it "singleton" do
+      let forest = [Node 'a' []]
+      Rosebud.leavesForest forest
+        `shouldBe` Just (NonEmpty.fromList ['a'])
+    it "some children" do
+      let forest =
+            [ Node 'a'
+                [ Node 'b'
+                    [ Node 'c' []
+                    , Node 'd' []
+                    ]
+                , Node 'e' []
+                ]
+            , Node 'f' []
+            , Node 'g'
+                [ Node 'h' []
+                ]
+            ]
+      Rosebud.leavesForest forest
+        `shouldBe` Just (NonEmpty.fromList ['c', 'd', 'e', 'f', 'h'])
+
+  describe "leavesNEForest" do
+    it "singleton" do
+      let forest = NonEmpty.fromList [Node 'a' []]
+      Rosebud.leavesNEForest forest
+        `shouldBe` NonEmpty.fromList ['a']
+    it "some children" do
+      let forest =
+            NonEmpty.fromList
+              [ Node 'a'
+                  [ Node 'b'
+                      [ Node 'c' []
+                      , Node 'd' []
+                      ]
+                  , Node 'e' []
+                  ]
+              , Node 'f' []
+              , Node 'g'
+                  [ Node 'h' []
+                  ]
+              ]
+      Rosebud.leavesNEForest forest
+        `shouldBe` NonEmpty.fromList ['c', 'd', 'e', 'f', 'h']
 
   describe "flattenForest" do
     it "number of labels stays the same" do
