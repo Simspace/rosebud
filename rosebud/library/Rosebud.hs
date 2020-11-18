@@ -311,8 +311,8 @@ zipWithTree f = Zip.mzipWith f
 
 -- | Produce all the paths for the given 'Tree'.
 --
--- >>> λ> pathsTree $ Node 1 [Node 2 [Node 4 [], Node 5 []], Node 3 []]
--- >>> fromList [1] :| [fromList [1,2],fromList [1,2,4],fromList [1,2,5],fromList [1,3]]
+-- > λ> pathsTree $ Node 1 [Node 2 [Node 4 [], Node 5 []], Node 3 []]
+-- > fromList [1] :| [fromList [1,2],fromList [1,2,4],fromList [1,2,5],fromList [1,3]]
 --
 -- @since 0.1.0.0
 pathsTree :: forall a. Tree a -> NonEmpty (Seq a)
@@ -450,7 +450,7 @@ eitherTreeFromLabels isRoot isImmediateChildOf labels = do
 
 -- | Build a 'Tree' from a flat input list of labels.
 --
--- Throws 'FromLabelsError' if anything goes wrong when building the 'Tree'.
+-- Throws 'TreeFromLabelsError' if anything goes wrong when building the 'Tree'.
 --
 -- @since 0.1.0.0
 unsafeTreeFromLabels
