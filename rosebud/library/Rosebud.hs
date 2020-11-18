@@ -32,12 +32,12 @@ module Rosebud
   , findNodeInTree
   , isSubtreeOf
   , isExactSubtreeOf
-  , isSubtreeOfBy
+  , isSubtreeOfUsing
     -- ** Forests
   , findNodeInForest
   , isSubtreeIn
   , isExactSubtreeIn
-  , isSubtreeInBy
+  , isSubtreeInUsing
 
     -- * Transformation
     -- ** Trees
@@ -91,7 +91,6 @@ import qualified Control.Exception as Ex
 import qualified Control.Monad.Trans.State as State
 import qualified Control.Monad.Zip as Zip
 import qualified Data.Foldable as Foldable
-import qualified Data.Function as Function
 import qualified Data.List as List
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Monoid as Monoid
@@ -206,7 +205,7 @@ findNodeInTree p = \case
 --
 -- @since 0.1.0.0
 isSubtreeOf :: (Ord a) => Tree a -> Tree a -> Bool
-isSubtreeOf = isSubtreeOfBy ((==) `Function.on` sortTree)
+isSubtreeOf = isSubtreeOfUsing sortTree
 
 -- | Check if the first 'Tree' is an exact subtree of the second, meaning each
 -- level of labels in the first 'Tree' exists in the same order in a subtree
@@ -214,26 +213,33 @@ isSubtreeOf = isSubtreeOfBy ((==) `Function.on` sortTree)
 --
 -- @since 0.1.0.0
 isExactSubtreeOf :: (Eq a) => Tree a -> Tree a -> Bool
-isExactSubtreeOf = isSubtreeOfBy (==)
+isExactSubtreeOf = isSubtreeOfUsing id
 
--- | Check if the first 'Tree' is a subtree of the second, where the subtree
--- determination is done via applying the binary predicate to the first 'Tree'
--- and each node in the second 'Tree'.
+-- | Check if the first 'Tree' is a subtree of the second via equality of the
+-- first 'Tree' with any node in the second 'Tree'.
 --
 -- This is a lower-level function. Users should prefer 'isSubtreeOf' and
--- 'isExactSubtreeOf' over this function.
+-- 'isExactSubtreeOf' over this function. The function argument enables
+-- pre-processing over the 'Tree' values involved, before equality-checking is
+-- performed.
 --
 -- @since 0.1.0.0
-isSubtreeOfBy
-  :: (Eq a)
-  => (Tree a -> Tree a -> Bool)
+isSubtreeOfUsing
+  :: forall a. (Eq a)
+  => (Tree a -> Tree a) -- ^ Transforms 'Tree' values prior to equality-checking
   -> Tree a
   -> Tree a
   -> Bool
-isSubtreeOfBy f subtree = \case
-  tree@Node { subForest }
-    | f subtree tree -> True
-    | otherwise -> or $ map (isSubtreeOfBy f subtree) subForest
+isSubtreeOfUsing f subtree = go . f
+  where
+  go :: Tree a -> Bool
+  go = \case
+    tree@Node { subForest }
+      | subtree' == tree -> True
+      | otherwise -> or $ map go subForest
+
+  subtree' :: Tree a
+  subtree' = f subtree
 
 -- | Find a particular 'Node' in a forest via the provided label predicate. This
 -- function delegates to 'findNodeInTree' for each 'Tree' in the forest.
@@ -249,7 +255,7 @@ findNodeInForest p forest =
 --
 -- @since 0.1.0.0
 isSubtreeIn :: (Foldable t, Ord a) => Tree a -> t (Tree a) -> Bool
-isSubtreeIn = isSubtreeInBy ((==) `Function.on` sortTree)
+isSubtreeIn = isSubtreeInUsing sortTree
 
 -- | Check if the 'Tree' is an exact subtree in the forest, meaning each
 -- level of labels in the 'Tree' exists in the same order in a subtree
@@ -257,23 +263,25 @@ isSubtreeIn = isSubtreeInBy ((==) `Function.on` sortTree)
 --
 -- @since 0.1.0.0
 isExactSubtreeIn :: (Eq a, Foldable t) => Tree a -> t (Tree a) -> Bool
-isExactSubtreeIn = isSubtreeInBy (==)
+isExactSubtreeIn = isSubtreeInUsing id
 
--- | Check if the 'Tree' is a subtree in the forest, where the subtree
--- determination is done via applying the binary predicate to the first 'Tree'
--- and each node in each 'Tree' in the forest.
+-- | Check if the first 'Tree' is a subtree in the forest via equality of the
+-- first 'Tree' with any node in any 'Tree' in the forest.
 --
 -- This is a lower-level function. Users should prefer 'isSubtreeIn' and
--- 'isExactSubtreeIn' over this function.
+-- 'isExactSubtreeIn' over this function. The function argument enables
+-- pre-processing over the 'Tree' values involved, before equality-checking is
+-- performed.
 --
 -- @since 0.1.0.0
-isSubtreeInBy
+isSubtreeInUsing
   :: (Eq a, Foldable t)
-  => (Tree a -> Tree a -> Bool)
+  => (Tree a -> Tree a) -- ^ Transforms 'Tree' values prior to equality-checking
   -> Tree a
   -> t (Tree a)
   -> Bool
-isSubtreeInBy f subtree = or . map (isSubtreeOfBy f subtree) . Foldable.toList
+isSubtreeInUsing f subtree =
+  or . map (isSubtreeOfUsing f subtree) . Foldable.toList
 
 -- | Number each level of labels in the tree, starting from 0 at each level.
 --
