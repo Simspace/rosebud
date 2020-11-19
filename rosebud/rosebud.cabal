@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8976b656eacf997c92d79fa09e4e330e13641417e62e0be09731988d8729907d
+-- hash: 0ff44952082a3308e86f1cd7aab770e5b7ae30b3492e940e3b94e6d4ff814550
 
 name:           rosebud
-version:        0.1.0.0
+version:        0.2.0.0
 synopsis:       Common rose tree/forest functions
 description:    Common functions and patterns for working with rose tree/forest values from
                 the `containers` package.
