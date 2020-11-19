@@ -497,67 +497,51 @@ spec = parallel do
         NonEmpty.toList (Rosebud.neSubtrees x) `shouldBe` Rosebud.subtrees x
 
   describe "eitherTreeFromLabels" do
-    it "returns 'TooManyTreesError' when more than one root is present" do
-      let labels =
-            NonEmpty.fromList
-              [ "1"
-              , "1 1"
-              , "2"
-              ]
+    it "returns 'OrphansFoundError when more than one root is present" do
+      let root = "1"
+      let children =
+            [ "1 1"
+            , "2"
+            ]
 
       let expectedForest =
             NonEmpty.fromList
               [ Node "1"
                   [ Node "1 1" []
                   ]
-              , Node "2" []
               ]
+      let expectedOrphans = pure "2"
 
-      Rosebud.eitherTreeFromLabels isRoot isImmediateChildOf labels
-        `shouldBe` Left (Rosebud.TooManyTreesError expectedForest)
-    it "returns 'ForestFromLabelsError' when no roots can be found" do
-      let labels =
-            NonEmpty.fromList
-              [ "1 1"
-              , "1 2"
-              ]
-
-      Rosebud.eitherTreeFromLabels isRoot isImmediateChildOf labels
-        `shouldBe`
-          Left (Rosebud.ForestFromLabelsError $ Rosebud.NoRootsFoundError labels)
-    it "returns 'ForestFromLabelsError' when orphans are found" do
-      let labels =
-            NonEmpty.fromList
-              [ "1"
-              , "1 1"
-              , "1 2 1"
-              ]
+      Rosebud.eitherTreeFromLabels isImmediateChildOf root children
+        `shouldBe` Left (Rosebud.OrphansFoundError expectedForest expectedOrphans)
+    it "returns 'OrphansFoundError' when orphans are found" do
+      let root = "1"
+      let children =
+            [ "1 1"
+            , "1 2 1"
+            ]
 
       let expectedForest =
-            [ Node "1"
-                [ Node "1 1" []
-                ]
-            ]
+            NonEmpty.fromList
+              [ Node "1"
+                  [ Node "1 1" []
+                  ]
+              ]
       let expectedOrphans = pure "1 2 1"
 
-      Rosebud.eitherTreeFromLabels isRoot isImmediateChildOf labels
+      Rosebud.eitherTreeFromLabels isImmediateChildOf root children
         `shouldBe`
-          Left
-            ( Rosebud.ForestFromLabelsError
-                ( Rosebud.OrphansFoundError expectedForest expectedOrphans
-                )
-            )
+          Left (Rosebud.OrphansFoundError expectedForest expectedOrphans)
     it "builds a tree" do
-      let labels =
-            NonEmpty.fromList
-              [ "1"
-              , "1 1"
-              , "1 2"
-              , "1 2 1"
-              , "1 2 2"
-              , "1 3"
-              ]
-      Rosebud.eitherTreeFromLabels isRoot isImmediateChildOf labels
+      let root = "1"
+      let children =
+            [ "1 1"
+            , "1 2"
+            , "1 2 1"
+            , "1 2 2"
+            , "1 3"
+            ]
+      Rosebud.eitherTreeFromLabels isImmediateChildOf root children
         `shouldBe`
           Right
             ( Node "1"
@@ -571,65 +555,50 @@ spec = parallel do
             )
 
   describe "unsafeTreeFromLabels" do
-    it "throws 'TooManyTreesError' when more than one root is present" do
-      let labels =
-            NonEmpty.fromList
-              [ "1"
-              , "1 1"
-              , "2"
-              ]
+    it "throws 'OrphansFoundError' when more than one root is present" do
+      let root = "1"
+      let children =
+            [ "1 1"
+            , "2"
+            ]
 
       let expectedForest =
             NonEmpty.fromList
               [ Node "1"
                   [ Node "1 1" []
                   ]
-              , Node "2" []
               ]
+      let expectedOrphans = pure "2"
 
-      Exception.evaluate (Rosebud.unsafeTreeFromLabels isRoot isImmediateChildOf labels)
-        `shouldThrow` tooManyTreesErrorSelector expectedForest
-    it "throws 'ForestFromLabelsError' when no roots can be found" do
-      let labels =
-            NonEmpty.fromList
-              [ "1 1"
-              , "1 2"
-              ]
-
-      Exception.evaluate (Rosebud.unsafeTreeFromLabels isRoot isImmediateChildOf labels)
-        `shouldThrow`
-          forestFromLabelsError'NoRootsFoundErrorSelector labels
-    it "throws 'ForestFromLabelsError' when orphans are found" do
-      let labels =
-            NonEmpty.fromList
-              [ "1"
-              , "1 1"
-              , "1 2 1"
-              ]
+      Exception.evaluate (Rosebud.unsafeTreeFromLabels isImmediateChildOf root children)
+        `shouldThrow` orphansFoundErrorSelector expectedForest expectedOrphans
+    it "throws 'OrphansFoundError' when orphans are found" do
+      let root = "1"
+      let children =
+            [ "1 1"
+            , "1 2 1"
+            ]
 
       let expectedForest =
-            [ Node "1"
-                [ Node "1 1" []
-                ]
-            ]
+            NonEmpty.fromList
+              [ Node "1"
+                  [ Node "1 1" []
+                  ]
+              ]
       let expectedOrphans = pure "1 2 1"
 
-      Exception.evaluate (Rosebud.unsafeTreeFromLabels isRoot isImmediateChildOf labels)
-        `shouldThrow`
-          forestFromLabelsError'OrphansFoundErrorSelector
-            expectedForest
-            expectedOrphans
+      Exception.evaluate (Rosebud.unsafeTreeFromLabels isImmediateChildOf root children)
+        `shouldThrow` orphansFoundErrorSelector expectedForest expectedOrphans
     it "builds a tree" do
-      let labels =
-            NonEmpty.fromList
-              [ "1"
-              , "1 1"
-              , "1 2"
-              , "1 2 1"
-              , "1 2 2"
-              , "1 3"
-              ]
-      Rosebud.unsafeTreeFromLabels isRoot isImmediateChildOf labels
+      let root = "1"
+      let children =
+            [ "1 1"
+            , "1 2"
+            , "1 2 1"
+            , "1 2 2"
+            , "1 3"
+            ]
+      Rosebud.unsafeTreeFromLabels isImmediateChildOf root children
         `shouldBe`
             Node "1"
               [ Node "1 1" []
@@ -650,6 +619,111 @@ spec = parallel do
       QC.property \(x :: Int) ->
         Rosebud.singletonNEForest x `shouldBe` Node x [] :| []
 
+  describe "eitherNEForestFromPartitionedLabels" do
+    it "returns 'OrphansFoundError' when orphans are found" do
+      let roots =
+            NonEmpty.fromList
+              [ "1"
+              ]
+      let children =
+            [ "1 1"
+            , "1 2 1"
+            ]
+
+      let expectedForest =
+            NonEmpty.fromList
+              [ Node "1"
+                  [ Node "1 1" []
+                  ]
+              ]
+      let expectedOrphans = pure "1 2 1"
+
+      Rosebud.eitherNEForestFromPartitionedLabels isImmediateChildOf roots children
+        `shouldBe`
+          Left (Rosebud.OrphansFoundError expectedForest expectedOrphans)
+    it "builds a forest" do
+      let roots =
+            NonEmpty.fromList
+              [ "1"
+              , "2"
+              ]
+      let children =
+            [ "1 1"
+            , "1 2"
+            , "1 2 1"
+            , "1 2 2"
+            , "1 3"
+            , "2 1"
+            ]
+      let expectedNEForest =
+            NonEmpty.fromList
+              [ Node "1"
+                  [ Node "1 1" []
+                  , Node "1 2"
+                      [ Node "1 2 1" []
+                      , Node "1 2 2" []
+                      ]
+                  , Node "1 3" []
+                  ]
+              , Node "2"
+                  [ Node "2 1" []
+                  ]
+              ]
+      Rosebud.eitherNEForestFromPartitionedLabels isImmediateChildOf roots children
+        `shouldBe` Right expectedNEForest
+
+  describe "unsafeNEForestFromPartitionedLabels" do
+    it "throws 'OrphansFoundError' when orphans are found" do
+      let roots =
+            NonEmpty.fromList
+              [ "1"
+              ]
+      let children =
+            [ "1 1"
+            , "1 2 1"
+            ]
+
+      let expectedForest =
+            NonEmpty.fromList
+              [ Node "1"
+                  [ Node "1 1" []
+                  ]
+              ]
+      let expectedOrphans = pure "1 2 1"
+
+      Exception.evaluate (Rosebud.unsafeNEForestFromPartitionedLabels isImmediateChildOf roots children)
+        `shouldThrow` orphansFoundErrorSelector expectedForest expectedOrphans
+    it "builds a forest" do
+      let roots =
+            NonEmpty.fromList
+              [ "1"
+              , "2"
+              ]
+      let children =
+            [ "1 1"
+            , "1 2"
+            , "1 2 1"
+            , "1 2 2"
+            , "1 3"
+            , "2 1"
+            ]
+      let expectedNEForest =
+            NonEmpty.fromList
+              [ Node "1"
+                  [ Node "1 1" []
+                  , Node "1 2"
+                      [ Node "1 2 1" []
+                      , Node "1 2 2" []
+                      ]
+                  , Node "1 3" []
+                  ]
+              , Node "2"
+                  [ Node "2 1" []
+                  ]
+              ]
+      Rosebud.unsafeNEForestFromPartitionedLabels isImmediateChildOf roots children
+        `shouldBe` expectedNEForest
+
   describe "eitherNEForestFromLabels" do
     it "returns 'NoRootsFoundError' when no roots can be found" do
       let labels =
@@ -669,15 +743,20 @@ spec = parallel do
               ]
 
       let expectedForest =
-            [ Node "1"
-                [ Node "1 1" []
-                ]
-            ]
+            NonEmpty.fromList
+              [ Node "1"
+                  [ Node "1 1" []
+                  ]
+              ]
       let expectedOrphans = pure "1 2 1"
 
       Rosebud.eitherNEForestFromLabels isRoot isImmediateChildOf labels
         `shouldBe`
-          Left (Rosebud.OrphansFoundError expectedForest expectedOrphans)
+          Left
+            ( Rosebud.FromPartitionedLabels
+                ( Rosebud.OrphansFoundError expectedForest expectedOrphans
+                )
+            )
     it "builds a forest" do
       let labels =
             NonEmpty.fromList
@@ -726,14 +805,15 @@ spec = parallel do
               ]
 
       let expectedForest =
-            [ Node "1"
-                [ Node "1 1" []
-                ]
-            ]
+            NonEmpty.fromList
+              [ Node "1"
+                  [ Node "1 1" []
+                  ]
+              ]
       let expectedOrphans = pure "1 2 1"
 
       Exception.evaluate (Rosebud.unsafeNEForestFromLabels isRoot isImmediateChildOf labels)
-        `shouldThrow` orphansFoundErrorSelector expectedForest expectedOrphans
+        `shouldThrow` fromPartitionedLabels'OrphansFoundErrorSelector expectedForest expectedOrphans
     it "builds a forest" do
       let labels =
             NonEmpty.fromList
@@ -803,54 +883,34 @@ unsafeNEForestErrorSelector :: ErrorCall -> Bool
 unsafeNEForestErrorSelector = \case
   ErrorCall err -> err == "Rosebud.unsafeNEForest: empty forest"
 
+orphansFoundErrorSelector
+  :: (Eq a)
+  => NEForest a
+  -> NonEmpty a
+  -> Rosebud.FromPartitionedLabelsError a
+  -> Bool
+orphansFoundErrorSelector expectedForest expectedOrphans = \case
+  Rosebud.OrphansFoundError actualForest actualOrphans ->
+    expectedForest == actualForest && expectedOrphans == actualOrphans
+
 noRootsFoundErrorSelector
   :: (Eq a)
   => NonEmpty a
-  -> Rosebud.NEForestFromLabelsError a
+  -> Rosebud.FromLabelsError a
   -> Bool
 noRootsFoundErrorSelector expectedLabels = \case
   Rosebud.NoRootsFoundError actualLabels -> expectedLabels == actualLabels
   _ -> False
 
-orphansFoundErrorSelector
-  :: (Eq a)
-  => Forest a
-  -> NonEmpty a
-  -> Rosebud.NEForestFromLabelsError a
-  -> Bool
-orphansFoundErrorSelector expectedForest expectedOrphans = \case
-  Rosebud.OrphansFoundError actualForest actualOrphans ->
-    expectedForest == actualForest && expectedOrphans == actualOrphans
-  _ -> False
-
-tooManyTreesErrorSelector
+fromPartitionedLabels'OrphansFoundErrorSelector
   :: (Eq a)
   => NEForest a
-  -> Rosebud.TreeFromLabelsError a
-  -> Bool
-tooManyTreesErrorSelector expectedForest = \case
-  Rosebud.TooManyTreesError actualForest -> expectedForest == actualForest
-  _ -> False
-
-forestFromLabelsError'NoRootsFoundErrorSelector
-  :: (Eq a)
-  => NonEmpty a
-  -> Rosebud.TreeFromLabelsError a
-  -> Bool
-forestFromLabelsError'NoRootsFoundErrorSelector expectedLabels = \case
-  Rosebud.ForestFromLabelsError (Rosebud.NoRootsFoundError actualLabels) ->
-    expectedLabels == actualLabels
-  _ -> False
-
-forestFromLabelsError'OrphansFoundErrorSelector
-  :: (Eq a)
-  => Forest a
   -> NonEmpty a
-  -> Rosebud.TreeFromLabelsError a
+  -> Rosebud.FromLabelsError a
   -> Bool
-forestFromLabelsError'OrphansFoundErrorSelector expectedForest expectedOrphans =
+fromPartitionedLabels'OrphansFoundErrorSelector expectedForest expectedOrphans =
   \case
-    Rosebud.ForestFromLabelsError
+    Rosebud.FromPartitionedLabels
       ( Rosebud.OrphansFoundError actualForest actualOrphans
       ) -> expectedForest == actualForest && expectedOrphans == actualOrphans
     _ -> False
