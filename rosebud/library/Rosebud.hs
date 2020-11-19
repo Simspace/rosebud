@@ -75,14 +75,16 @@ module Rosebud
   , indicesNEForest
   , subtrees
   , neSubtrees
+  , eitherNEForestFromPartitionedLabels
+  , unsafeNEForestFromPartitionedLabels
   , eitherNEForestFromLabels
   , unsafeNEForestFromLabels
   , neForest
   , unsafeNEForest
 
     -- * Errors
-  , NEForestFromLabelsError(NoRootsFoundError, OrphansFoundError)
-  , TreeFromLabelsError(TooManyTreesError, ForestFromLabelsError)
+  , FromPartitionedLabelsError(OrphansFoundError)
+  , FromLabelsError(NoRootsFoundError, FromPartitionedLabels)
   ) where
 
 import Control.Exception (Exception)
@@ -97,12 +99,14 @@ import Prelude
 import qualified Control.Exception as Ex
 import qualified Control.Monad.Trans.State as State
 import qualified Control.Monad.Zip as Zip
+import qualified Data.Bifunctor as Bifunctor
 import qualified Data.Foldable as Foldable
 import qualified Data.List as List
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Monoid as Monoid
 import qualified Data.Ord as Ord
 import qualified Data.Semigroup as Semigroup
+import qualified Data.Traversable as Traversable
 import qualified Data.Tree as Tree
 
 -- | A convenience type alias for a non-empty 'Forest'.
@@ -110,35 +114,31 @@ import qualified Data.Tree as Tree
 -- @since 0.1.0.0
 type NEForest a = NonEmpty (Tree a)
 
--- | The error type for 'eitherNEForestFromLabels'.
+-- | The error type when building a 'Tree'/'NEForest' from labels already
+-- partitioned into roots and children.
 --
--- @since 0.1.0.0
-data NEForestFromLabelsError a
-  = -- | No root label(s) were found. Provides the flat list of input labels.
-    --
-    -- @since 0.1.0.0
-    NoRootsFoundError (NonEmpty a)
-    -- | Orphan labels were found. Provides the assembled 'Forest' and a flat
+-- @since 0.2.0.0
+data FromPartitionedLabelsError a
+  = -- | Orphan labels were found. Provides the assembled 'NEForest' and a flat
     -- list of orphan labels.
     --
-    -- @since 0.1.0.0
-  | OrphansFoundError (Forest a) (NonEmpty a)
+    -- @since 0.2.0.0
+    OrphansFoundError (NEForest a) (NonEmpty a)
   deriving stock (Eq, Show, Generic)
   deriving anyclass (Exception)
 
--- | The error type for 'eitherTreeFromLabels'.
+-- | The error type when building an 'NEForest' from a flat list of labels.
 --
--- @since 0.1.0.0
-data TreeFromLabelsError a
-  = -- | Produced more than one 'Tree' when only one 'Tree' was expected.
-    -- Provides back all assembled 'Tree' values in an 'NEForest'.
+-- @since 0.2.0.0
+data FromLabelsError a
+  = -- | No root label(s) were found. Provides the flat list of input labels.
     --
-    -- @since 0.1.0.0
-    TooManyTreesError (NEForest a)
-    -- | Produced via the internal call to 'eitherNEForestFromLabels'.
+    -- @since 0.2.0.0
+    NoRootsFoundError (NonEmpty a)
+    -- | Produced via internally building from partitioned labels.
     --
-    -- @since 0.1.0.0
-  | ForestFromLabelsError (NEForestFromLabelsError a)
+    -- @since 0.2.0.0
+  | FromPartitionedLabels (FromPartitionedLabelsError a)
   deriving stock (Eq, Show, Generic)
   deriving anyclass (Exception)
 
@@ -463,37 +463,32 @@ neSubtrees = NonEmpty.fromList . subtrees
 indicesTree :: (Enum a, Num a) => Tree a
 indicesTree = Tree.unfoldTree (flip (,) [0..]) 0
 
--- | Build a 'Tree' from a flat input list of labels.
+-- | Build a 'Tree' from a root label and a flat list of child labels.
 --
--- @since 0.1.0.0
+-- @since 0.2.0.0
 eitherTreeFromLabels
-  :: (a -> Bool) -- ^ Is the label a root?
-  -> (a -> a -> Bool) -- ^ Is the first label an immediate child of the second?
-  -> NonEmpty a -- ^ Flat list of labels
-  -> Either (TreeFromLabelsError a) (Tree a)
-eitherTreeFromLabels isRoot isImmediateChildOf labels = do
-  case eitherNEForestFromLabels isRoot isImmediateChildOf labels of
-    Left err -> Left $ ForestFromLabelsError err
-    Right forest ->
-      case forest of
-        tree :| [] -> Right tree
-        _tree :| _trees -> Left $ TooManyTreesError forest
+  :: (a -> a -> Bool) -- ^ Is the first label an immediate child of the second?
+  -> a -- ^ Root label
+  -> [a] -- ^ Flat list of child labels
+  -> Either (FromPartitionedLabelsError a) (Tree a)
+eitherTreeFromLabels isImmediateChildOf root children = do
+  Bifunctor.second NonEmpty.head
+    $ eitherNEForestFromPartitionedLabels isImmediateChildOf (pure root) children
 
--- | Build a 'Tree' from a flat input list of labels.
+-- | Build a 'Tree' from a root label and a flat list of child labels.
 --
--- Throws 'TreeFromLabelsError' if anything goes wrong when building the 'Tree'.
+-- Throws 'FromPartitionedLabelsError' if anything goes wrong when building
+-- the 'Tree'.
 --
--- @since 0.1.0.0
+-- @since 0.2.0.0
 unsafeTreeFromLabels
   :: (Show a, Typeable a)
-  => (a -> Bool) -- ^ Is the label a root?
-  -> (a -> a -> Bool) -- ^ Is the first label an immediate child of the second?
-  -> NonEmpty a -- ^ Flat list of labels
+  => (a -> a -> Bool) -- ^ Is the first label an immediate child of the second?
+  -> a -- ^ Root label
+  -> [a] -- ^ Flat list of labels
   -> Tree a
-unsafeTreeFromLabels isRoot isImmediateChildOf labels = do
-  case eitherTreeFromLabels isRoot isImmediateChildOf labels of
-    Left ex -> Ex.throw ex
-    Right tree -> tree
+unsafeTreeFromLabels isImmediateChildOf root children = do
+  either Ex.throw id $ eitherTreeFromLabels isImmediateChildOf root children
 
 -- | Creates a 'Forest' containing a single 'Tree' that contains the provided
 -- label and no children.
@@ -521,6 +516,54 @@ indicesForest = Tree.unfoldForest (flip (,) [0..]) [0..]
 indicesNEForest :: (Enum a, Num a) => NEForest a
 indicesNEForest = NonEmpty.fromList indicesForest
 
+-- | Build an 'NEForest' from flat input lists of root and child labels.
+--
+-- @since 0.2.0.0
+eitherNEForestFromPartitionedLabels
+  :: forall a. (a -> a -> Bool) -- ^ Is the first label an immediate child of the second?
+  -> NonEmpty a -- ^ Flat list of root labels
+  -> [a] -- ^ Flat list of child labels
+  -> Either (FromPartitionedLabelsError a) (NEForest a)
+eitherNEForestFromPartitionedLabels isImmediateChildOf roots children =
+  case forestWithOrphans of
+    (forest, (orphan : orphans)) ->
+      Left $ OrphansFoundError forest $ orphan :| orphans
+    (forest, []) ->
+      Right forest
+  where
+  forestWithOrphans :: (NEForest a, [a])
+  forestWithOrphans = do
+    flip State.runState children do
+      Traversable.for roots \rootLabel -> do
+        Tree.unfoldTreeM parentChildrenPair rootLabel
+
+  parentChildrenPair :: a -> State [a] (a, [a])
+  parentChildrenPair parent = do
+    (cs, rest) <- fmap partitionChildren State.get
+    State.put rest
+    pure (parent, cs)
+    where
+    partitionChildren :: [a] -> ([a], [a])
+    partitionChildren =
+      List.partition \possibleChild ->
+        possibleChild `isImmediateChildOf` parent
+
+-- | Build an 'NEForest' from flat input lists of root and child labels.
+--
+-- Throws 'FromPartitionedLabelsError' if anything goes wrong when building
+-- the 'NEForest'.
+--
+-- @since 0.2.0.0
+unsafeNEForestFromPartitionedLabels
+  :: (Show a, Typeable a)
+  => (a -> a -> Bool) -- ^ Is the first label an immediate child of the second?
+  -> NonEmpty a -- ^ Flat list of root labels
+  -> [a] -- ^ Flat list of child labels
+  -> NEForest a
+unsafeNEForestFromPartitionedLabels isImmediateChildOf roots children =
+  either Ex.throw id
+    $ eitherNEForestFromPartitionedLabels isImmediateChildOf roots children
+
 -- | Build an 'NEForest' from a flat input list of labels.
 --
 -- @since 0.1.0.0
@@ -528,38 +571,20 @@ eitherNEForestFromLabels
   :: forall a. (a -> Bool) -- ^ Is the label a root?
   -> (a -> a -> Bool) -- ^ Is the first label an immediate child of the second?
   -> NonEmpty a -- ^ Flat list of labels
-  -> Either (NEForestFromLabelsError a) (NEForest a)
+  -> Either (FromLabelsError a) (NEForest a)
 eitherNEForestFromLabels isRoot isImmediateChildOf labels =
   case NonEmpty.partition isRoot labels of
     ([], _children) -> Left $ NoRootsFoundError labels
-    (rootLabels, childLabels) -> result where
-      result =
-        case forestWithOrphans of
-          (forest, (orphan : orphans)) ->
-            Left $ OrphansFoundError forest $ orphan :| orphans
-          (forest, []) ->
-            -- This NonEmpty conversion is righteous due to the input NonEmpty.
-            Right $ unsafeNEForest forest
-
-      forestWithOrphans :: (Forest a, [a])
-      forestWithOrphans = do
-        flip State.runState childLabels do
-          traverse (Tree.unfoldTreeM parentChildrenPair) rootLabels
-
-      parentChildrenPair :: a -> State [a] (a, [a])
-      parentChildrenPair parent = do
-        (children, rest) <- fmap partitionChildren State.get
-        State.put rest
-        pure (parent, children)
-        where
-        partitionChildren :: [a] -> ([a], [a])
-        partitionChildren =
-          List.partition \possibleChild ->
-            possibleChild `isImmediateChildOf` parent
+    (roots, children) ->
+      Bifunctor.first FromPartitionedLabels
+        $ eitherNEForestFromPartitionedLabels
+            isImmediateChildOf
+            (NonEmpty.fromList roots)
+            children
 
 -- | Build an 'NEForest' from a flat input list of labels.
 --
--- Throws 'NEForestFromLabelsError' if anything goes wrong when building the 'NEForest'.
+-- Throws 'FromLabelsError' if anything goes wrong when building the 'NEForest'.
 --
 -- @since 0.1.0.0
 unsafeNEForestFromLabels
@@ -568,10 +593,8 @@ unsafeNEForestFromLabels
   -> (a -> a -> Bool) -- ^ Is the first label an immediate child of the second?
   -> NonEmpty a -- ^ Flat list of labels
   -> NEForest a
-unsafeNEForestFromLabels isRoot isImmediateChildOf labels = do
-  case eitherNEForestFromLabels isRoot isImmediateChildOf labels of
-    Left ex -> Ex.throw ex
-    Right forest -> forest
+unsafeNEForestFromLabels isRoot isImmediateChildOf labels =
+  either Ex.throw id $ eitherNEForestFromLabels isRoot isImmediateChildOf labels
 
 -- | Build an 'NEForest' from a 'Forest', producing 'Nothing' if the input
 -- 'Forest' is empty.
